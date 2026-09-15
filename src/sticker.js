@@ -25,8 +25,10 @@ async function imageToSticker(buffer) {
   return sharp(buffer, { animated: true, failOn: 'none' })
     .rotate()
     .resize(512, 512, {
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 }
+      // Preenche toda a figurinha. Imagens retangulares recebem somente o
+      // recorte central mínimo necessário, sem barras transparentes.
+      fit: 'cover',
+      position: 'centre'
     })
     .webp({ quality: 88, effort: 4 })
     .toBuffer()
@@ -41,7 +43,7 @@ async function animatedToSticker(buffer, extension = 'media') {
   try {
     await writeFile(input, buffer)
     // WhatsApp accepts short animated WebP stickers. Limit to 10 seconds and 15 fps.
-    const filter = 'fps=15,scale=512:512:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000'
+    const filter = 'fps=15,scale=512:512:force_original_aspect_ratio=increase:force_divisible_by=2,crop=512:512'
     for (const quality of [55, 45, 35, 28]) {
       await runFfmpeg([
         '-y', '-i', input, '-t', '10', '-vf', filter,
